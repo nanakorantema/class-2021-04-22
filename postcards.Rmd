@@ -20,7 +20,59 @@ library(ggdist)
 x <- read_rds("pa.rds")
 ```
 
-*What sort of model should you estimate to determine who to send out postcards to if your goal is send them out to people who are most likely to vote? Who do you send out the cards to? How sure are you about what will happen? Temperance!*
+*What sort of model should you estimate to determine who to send out postcards to if your goal is to send them out to people who are most likely to vote? Who do you send out the cards to? How sure are you about what will happen? Temperance!*
+
+```{r}
+fit_1 <- stan_glm(voted_2020_primary ~  + treat*party + treat*sex + treat*age_bin + treat*vote_history,
+                  data = x,
+                  refresh = 0,
+                  seed = 54)
+
+print(fit_1, digits = 4)
+```
+
+```{r}
+
+tbl_regression(fit_1, 
+                           intercept = TRUE, 
+                           estimate_fun = function(x) style_sigfig(x, digits = 4)) %>%
+            as_gt()
+              # Using Beta as the name of the parameter column is weird.
+```
+```{r}
 
 
+treat <- unique(x$treat)
+vote_history <- unique(x$vote_history)
+party <- unique(x$party)
+sex <- unique(x$sex)
+age_bin <- unique(x$age_bin)
+
+
+newobs_1 <- expand_grid(treat, vote_history, party, sex, age_bin) 
+
+
+pe_1 <- add_fitted_draws(newobs_1, fit_1) 
+
+real_p <- pe_1 %>% 
+          filter(sex == "F",
+         party == "Democrat",
+         vote_history == "Municipal Primary Voter")
+
+real_p %>% 
+ggplot(aes(x = `.value`, y = age_bin, fill = treat)) + 
+  stat_slab(alpha = 0.5)
+
+```
+
+
+```{r}
+
+
+newobs_2 
+
+pp <- posterior_predict(object = fit_4, 
+                        newdata = newobs) %>%
+
+```
 
